@@ -26,6 +26,13 @@ const { initSocket } = require("./socket");
 
 const app = express();
 
+app.get("/", (req, res) => {
+    res.json({
+        status: "ok",
+        message: "Auth System Backend is running"
+    });
+});
+
 // =========================
 // CREATE HTTP SERVER
 // =========================
