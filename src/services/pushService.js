@@ -20,15 +20,14 @@ async function sendPush(token, title, body, io = null, userMeta = null, retryFn 
   try {
     const message = {
       token,
-      notification: { title, body },
       android: {
         priority: "high",
-        notification: {
-          sound: "default",
-        },
       },
-      // Pass userMeta object through to data payload if needed for client-side routing
-      data: userMeta ? Object.fromEntries(Object.entries(userMeta).map(([k, v]) => [k, String(v)])) : {},
+      data: {
+        title: title,
+        body: body,
+        ...(userMeta ? Object.fromEntries(Object.entries(userMeta).map(([k, v]) => [k, String(v)])) : {})
+      },
     };
 
     const response = await admin.messaging().send(message);
