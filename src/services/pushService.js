@@ -25,9 +25,6 @@ async function sendPush(token, title, body, io = null, userMeta = null, retryFn 
         priority: "high",
         notification: {
           sound: "default",
-          // Enables expandable notification styling on Android devices for long texts
-          style: "big_text",
-          bigText: body,
         },
       },
       // Pass userMeta object through to data payload if needed for client-side routing
