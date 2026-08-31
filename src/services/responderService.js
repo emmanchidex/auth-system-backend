@@ -164,8 +164,8 @@ async function assignAndNotify(primary, alertId = null) {
 
     await sendPush(
       token,
-      "🚨 Emergency Alert #" + (alertId || "New"),
-      alertDescription,
+      "🚨 Emergency Alert",
+      "You have been assigned to a new emergency",
       io,
       payload
     );
