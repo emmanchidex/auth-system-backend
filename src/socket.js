@@ -141,6 +141,31 @@ socket.on("join_token_room", (data) => {
     });
 
     // =========================
+    // SECURITY ACCEPTED EVENT
+    // =========================
+    socket.on("security_accepted", (data) => {
+      const alertId = data?.alertId;
+      const securityId = data?.securityId;
+
+      if (!alertId) return;
+
+      const room = `alert_${alertId}`;
+
+      // Ensure tracking is active for this alert room
+      activeTrackingAlerts.add(String(alertId));
+
+      // Broadcast to everyone in the alert room (notifying the student's device)
+      io.to(room).emit("security_accepted", {
+        alertId,
+        securityId,
+        status: "accepted",
+        message: "Security has accepted your alert. Starting live location sync."
+      });
+
+      console.log(`🟢 SECURITY ACCEPTED → Broadcasted to ${room} for securityId=${securityId}`);
+    });
+
+    // =========================
     // SECURITY LOCATION STREAM
     // =========================
     socket.on("send_security_location", (data) => {
