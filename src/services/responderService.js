@@ -125,8 +125,7 @@ async function assignAndNotify(primary, alertId = null) {
       return;
     }
 
-    // Fetch alert details, incident type, and severity level from database
-    let alertTitle = "🚨 Emergency Alert";
+    let alertTitle = "🚨 Emergency Alert: You Have Been Assign to a new emergency";
     let alertBody = "You have been assigned to a new emergency";
     let incidentTypeName = "Emergency";
     let severityName = "Normal";
@@ -155,11 +154,13 @@ async function assignAndNotify(primary, alertId = null) {
           incidentTypeName = row.custom_incident || row.incident_type || "Emergency";
           severityName = row.severity_name || "Standard";
 
-          // Structured clean format
-          alertTitle = `🚨 Emergency Alert: ${incidentTypeName} (${severityName})`;
+          const securityIdentifier = primary.security_number || primary.id;
+
+          alertTitle = `🚨 Emergency Alert: You Have Been Assign to a new emergency, incident type : ${incidentTypeName} severity : (${severityName})`;
+          
           alertBody = alertDescription 
-            ? `Description: ${alertDescription}` 
-            : `An emergency incident of type ${incidentTypeName} with severity ${severityName} requires your immediate attention.`;
+            ? `Description: ${alertDescription} [Assigned ID: ${securityIdentifier}]` 
+            : `An emergency incident of type ${incidentTypeName} with severity (${severityName}) requires your immediate attention. [Assigned ID: ${securityIdentifier}]`;
         }
       } catch (err) {
         console.error("⚠️ Failed to fetch alert details for push notification:", err.message);
@@ -202,8 +203,6 @@ async function assignAndNotify(primary, alertId = null) {
     );
 
     console.log("✅ PUSH SENT SUCCESSFULLY");
-    console.log(`🔒 Assigned Security Responder ID: ${primary.id} (Security Number: ${primary.security_number || 'N/A'})`);
-
     console.log(`📡 EMITTED TO: security_${socketUserId}`);
 
     console.log("🚨 [assignAndNotify] END\n");
