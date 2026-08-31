@@ -125,14 +125,24 @@ async function assignAndNotify(primary, alertId = null) {
       return;
     }
 
-    // Fetch alert details with intelligent fallback to custom_incident or incident_type
-    let alertDescription = "You have been assigned to a new emergency";
+    // Fetch alert details, incident type, and severity level from database
+    let alertTitle = "🚨 Emergency Alert";
+    let alertBody = "You have been assigned to a new emergency";
+    let incidentTypeName = "Emergency";
+    let severityName = "Normal";
+    let alertDescription = "";
+
     if (alertId) {
       try {
         const alertQuery = `
-          SELECT a.description, a.custom_incident, it.name AS incident_type 
+          SELECT 
+            a.description, 
+            a.custom_incident, 
+            it.name AS incident_type, 
+            s.name AS severity_name 
           FROM alerts a 
           LEFT JOIN incident_types it ON a.incident_type_id = it.id 
+          LEFT JOIN severity_levels s ON a.severity_id = s.id
           WHERE a.id = $1
         `;
         const alertResult = await pool.query(alertQuery, [alertId]);
@@ -141,15 +151,24 @@ async function assignAndNotify(primary, alertId = null) {
 
         if (alertResult.rows.length > 0) {
           const row = alertResult.rows[0];
-          alertDescription = row.description || row.custom_incident || row.incident_type || alertDescription;
+          alertDescription = row.description || "";
+          incidentTypeName = row.custom_incident || row.incident_type || "Emergency";
+          severityName = row.severity_name || "Standard";
+
+          // Format rich title and body including severity and incident type
+          alertTitle = `🚨 [${severityName}] ${incidentTypeName}`;
+          alertBody = alertDescription 
+            ? `Description: ${alertDescription}` 
+            : `Incident reported: ${incidentTypeName}`;
         }
       } catch (err) {
-        console.error("⚠️ Failed to fetch alert description for push notification:", err.message);
+        console.error("⚠️ Failed to fetch alert details for push notification:", err.message);
       }
     }
 
     console.log("📲 VALID FCM TOKEN FOUND:", token);
-    console.log("📝 RESOLVED NOTIFICATION BODY:", alertDescription);
+    console.log("📝 RESOLVED TITLE:", alertTitle);
+    console.log("📝 RESOLVED BODY:", alertBody);
 
     const socketUserId = primary.security_number || primary.id;
 
@@ -167,6 +186,8 @@ async function assignAndNotify(primary, alertId = null) {
       alertId: alertId,
       securityId: primary.id,
       securityNumber: primary.security_number,
+      incidentType: incidentTypeName,
+      severity: severityName,
       description: alertDescription
     };
 
@@ -174,8 +195,8 @@ async function assignAndNotify(primary, alertId = null) {
 
     await sendPush(
       token,
-      "🚨 Emergency Alert",
-      alertDescription,
+      alertTitle,
+      alertBody,
       io,
       payload
     );
