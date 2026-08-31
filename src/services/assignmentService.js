@@ -110,7 +110,7 @@ if (primary?.fcm_token) {
 
   console.log("✅ Primary assigned:", primary.id);
 
-  await assignAndNotify(primary);
+  await assignAndNotify(primary, alertId);
 
   await createNotification({
     alertId,
@@ -138,7 +138,7 @@ if (!assigned) {
 
     console.log("🟡 Backup assigned:", backup.id);
 
-    await assignAndNotify(backup);
+    await assignAndNotify(backup, alertId);
 
     await createNotification({
       alertId,
