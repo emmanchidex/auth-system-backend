@@ -125,6 +125,20 @@ async function assignAndNotify(primary, alertId = null) {
       return;
     }
 
+    // Fetch alert details (description, etc.) from the database if alertId is provided
+    let alertDescription = "You have been assigned to a new emergency";
+    if (alertId) {
+      try {
+        const alertQuery = `SELECT description FROM alerts WHERE id = $1`;
+        const alertResult = await pool.query(alertQuery, [alertId]);
+        if (alertResult.rows.length > 0 && alertResult.rows[0].description) {
+          alertDescription = alertResult.rows[0].description;
+        }
+      } catch (err) {
+        console.error("⚠️ Failed to fetch alert description for push notification:", err.message);
+      }
+    }
+
     console.log("📲 VALID FCM TOKEN FOUND:", token);
 
     const socketUserId = primary.security_number || primary.id;
@@ -141,14 +155,17 @@ async function assignAndNotify(primary, alertId = null) {
       userId: socketUserId,
       role: "security",
       alertId: alertId,
+      securityId: primary.id,
+      securityNumber: primary.security_number,
+      description: alertDescription
     };
 
     console.log("📦 PUSH PAYLOAD:", payload);
 
     await sendPush(
       token,
-      "🚨 Emergency Alert",
-      "You have been assigned to a new emergency",
+      "🚨 Emergency Alert #" + (alertId || "New"),
+      alertDescription,
       io,
       payload
     );
