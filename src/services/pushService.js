@@ -40,17 +40,20 @@ async function sendPush(token, title, body, io = null, userMeta = null, retryFn 
     // ===============================
     // 🚨 INVALID TOKEN HANDLING
     // ===============================
-const invalidTokenErrors = [
-  "messaging/registration-token-not-registered",
-  "messaging/invalid-registration-token",
-  "messaging/sender-id-mismatch",
-  "messaging/unregistered",
-];
+    const invalidTokenErrors = [
+      "messaging/registration-token-not-registered",
+      "messaging/invalid-registration-token",
+      "messaging/sender-id-mismatch",
+      "messaging/unregistered",
+      "NotRegistered", // Added to catch raw Firebase messaging error strings
+    ];
 
-if (
-  invalidTokenErrors.includes(err.code) ||
-  err.message?.includes("Requested entity was not found")
-) {
+    const isInvalidToken =
+      invalidTokenErrors.includes(err.code) ||
+      invalidTokenErrors.some(code => err.message?.includes(code)) ||
+      err.message?.includes("Requested entity was not found");
+
+    if (isInvalidToken) {
       console.log("⚠️ Invalid FCM token detected");
 
       const userId = userMeta?.userId;
