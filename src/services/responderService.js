@@ -125,14 +125,23 @@ async function assignAndNotify(primary, alertId = null) {
       return;
     }
 
-    // Fetch alert details (description, etc.) from the database if alertId is provided
+    // Fetch alert details with intelligent fallback to custom_incident or incident_type
     let alertDescription = "You have been assigned to a new emergency";
     if (alertId) {
       try {
-        const alertQuery = `SELECT description FROM alerts WHERE id = $1`;
+        const alertQuery = `
+          SELECT a.description, a.custom_incident, it.name AS incident_type 
+          FROM alerts a 
+          LEFT JOIN incident_types it ON a.incident_type_id = it.id 
+          WHERE a.id = $1
+        `;
         const alertResult = await pool.query(alertQuery, [alertId]);
-        if (alertResult.rows.length > 0 && alertResult.rows[0].description) {
-          alertDescription = alertResult.rows[0].description;
+        
+        console.log("📊 ALERT QUERY RESULT:", alertResult.rows);
+
+        if (alertResult.rows.length > 0) {
+          const row = alertResult.rows[0];
+          alertDescription = row.description || row.custom_incident || row.incident_type || alertDescription;
         }
       } catch (err) {
         console.error("⚠️ Failed to fetch alert description for push notification:", err.message);
@@ -140,6 +149,7 @@ async function assignAndNotify(primary, alertId = null) {
     }
 
     console.log("📲 VALID FCM TOKEN FOUND:", token);
+    console.log("📝 RESOLVED NOTIFICATION BODY:", alertDescription);
 
     const socketUserId = primary.security_number || primary.id;
 
