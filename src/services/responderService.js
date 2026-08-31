@@ -156,11 +156,11 @@ async function assignAndNotify(primary, alertId = null) {
 
           const securityIdentifier = primary.security_number || primary.id;
 
-          alertTitle = `🚨 Emergency Alert: You Have Been Assign to a new emergency, incident type : ${incidentTypeName} severity : (${severityName})`;
+          alertTitle = `🚨 Emergency Alert: You Have Been Assign to a new emergency, incident type : ${incidentTypeName} | severity : (${severityName})`;
           
           alertBody = alertDescription 
             ? `Description: ${alertDescription} [Assigned ID: ${securityIdentifier}]` 
-            : `An emergency incident of type ${incidentTypeName} with severity (${severityName}) requires your immediate attention. [Assigned ID: ${securityIdentifier}]`;
+            : `An emergency incident of type ${incidentTypeName} with severity (${severityName}) requires your immediate attention. [Security ID: ${securityIdentifier}]`;
         }
       } catch (err) {
         console.error("⚠️ Failed to fetch alert details for push notification:", err.message);
