@@ -21,6 +21,17 @@ async function sendPush(token, title, body, io = null, userMeta = null, retryFn 
     const message = {
       token,
       notification: { title, body },
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          // Enables expandable notification styling on Android devices for long texts
+          style: "big_text",
+          bigText: body,
+        },
+      },
+      // Pass userMeta object through to data payload if needed for client-side routing
+      data: userMeta ? Object.fromEntries(Object.entries(userMeta).map(([k, v]) => [k, String(v)])) : {},
     };
 
     const response = await admin.messaging().send(message);
@@ -45,7 +56,7 @@ async function sendPush(token, title, body, io = null, userMeta = null, retryFn 
       "messaging/invalid-registration-token",
       "messaging/sender-id-mismatch",
       "messaging/unregistered",
-      "NotRegistered", // Added to catch raw Firebase messaging error strings
+      "NotRegistered", 
     ];
 
     const isInvalidToken =
