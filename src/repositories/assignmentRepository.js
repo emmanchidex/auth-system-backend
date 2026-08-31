@@ -196,6 +196,43 @@ async function completeAssignment(alertId, securityNumber) {
 }
 
 // =========================
+// CANCEL ALERT
+// =========================
+async function cancelAlert(alertId) {
+  console.log("❌ cancelAlert:", { alertId });
+
+  try {
+    const { rows } = await pool.query(
+      `UPDATE alerts SET status = 'cancelled' WHERE id = $1 RETURNING *;`,
+      [alertId]
+    );
+
+    console.log("✅ Alert cancelled:", rows[0]);
+
+    const io = getIO();
+    const room = `alert_${alertId}`;
+
+    console.log("📡 EMIT stop_tracking (cancelled) →", room);
+
+    const payload = {
+      event: "stop_tracking",
+      alertId,
+      status: "cancelled",
+      timestamp: new Date().toISOString(),
+    };
+
+    io.to(room).emit("stop_tracking", payload);
+
+    console.log("📤 SENT:", payload);
+
+    return rows[0];
+  } catch (err) {
+    console.error("❌ cancelAlert ERROR:", err.message);
+    throw err;
+  }
+}
+
+// =========================
 // PRIORITY LOG
 // =========================
 async function logPriority(alertId, priorityScore, severityScore, distanceScore) {
@@ -226,6 +263,7 @@ module.exports = {
   acceptAssignment,
   rejectAssignment,
   completeAssignment,
+  cancelAlert, // 👈 Added export here so your controller can access it
   logPriority,
   getSecurityIdByNumber,
 };

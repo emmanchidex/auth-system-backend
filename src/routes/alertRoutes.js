@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-// ✅ correct import (destructured)
 const {
   getAlerts,
   getAlertById,
   createAlert,
   getStudentAlerts,
-  updateAlertLocation
+  updateAlertLocation,
+  cancelAlert // 👈 Added import
 } = require("../controllers/alertController");
 
 console.log("🔥 ALERT ROUTES LOADED");
@@ -25,5 +25,7 @@ router.get("/alerts/:id", getAlertById);
 router.get("/alerts/student/:registrationNumber", getStudentAlerts);
 
 router.put("/alerts/:id/location", updateAlertLocation);
+
+router.put("/alerts/:id/cancel", cancelAlert); // 👈 Added route
 
 module.exports = router;
