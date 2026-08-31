@@ -159,7 +159,7 @@ async function assignAndNotify(primary, alertId = null) {
           alertTitle = `🚨 Emergency Alert: You Have Been Assign to a new emergency, incident type : ${incidentTypeName} | severity : (${severityName})`;
           
           alertBody = alertDescription 
-            ? `Description: ${alertDescription} [Assigned ID: ${securityIdentifier}]` 
+            ? `Description: ${alertDescription} [Security ID: ${securityIdentifier}]` 
             : `An emergency incident of type ${incidentTypeName} with severity (${severityName}) requires your immediate attention. [Security ID: ${securityIdentifier}]`;
         }
       } catch (err) {
