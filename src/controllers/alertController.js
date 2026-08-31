@@ -52,7 +52,16 @@ exports.cancelAlert = async (req, res) => {
     const updatedAlert = result.rows[0];
     console.log("✅ Alert cancelled in DB:", updatedAlert);
 
-    // 📡 Broadcast socket event to stop tracking
+    await pool.query(
+      `
+      UPDATE alert_assignments
+      SET status = 'cancelled'
+      WHERE alert_id = $1 AND status != 'cancelled'
+      `,
+      [id]
+    );
+    console.log("✅ Associated alert assignments updated to cancelled");
+
     const io = getIO();
     const room = `alert_${id}`;
 
