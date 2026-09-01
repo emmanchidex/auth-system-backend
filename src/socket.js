@@ -143,26 +143,61 @@ socket.on("join_token_room", (data) => {
     // =========================
     // SECURITY ACCEPTED EVENT
     // =========================
-    socket.on("security_accepted", (data) => {
+   // =========================
+    // SECURITY ACCEPTED EVENT
+    // =========================
+    socket.on("security_accepted", async (data) => {
       const alertId = data?.alertId;
       const securityId = data?.securityId;
 
       if (!alertId) return;
 
       const room = `alert_${alertId}`;
-
-      // Ensure tracking is active for this alert room
       activeTrackingAlerts.add(String(alertId));
 
-      // Broadcast to everyone in the alert room (notifying the student's device)
-      io.to(room).emit("security_accepted", {
-        alertId,
-        securityId,
-        status: "accepted",
-        message: "Security has accepted your alert. Starting live location sync."
-      });
+      try {
+        // 1. Look up the student_id linked to this alert in PostgreSQL
+        const alertRecord = await pool.query(
+          "SELECT student_id FROM alerts WHERE id = $1",
+          [alertId]
+        );
 
-      console.log(`🟢 SECURITY ACCEPTED → Broadcasted to ${room} for securityId=${securityId}`);
+        if (alertRecord.rows.length > 0) {
+          const studentId = alertRecord.rows[0].student_id;
+          const studentTokenRoom = `student_${studentId}`;
+
+          // 2. TARGET THE STUDENT'S TOKEN ROOM (Guaranteed delivery)
+          io.to(studentTokenRoom).emit("security_accepted", {
+            alertId,
+            securityId,
+            status: "accepted",
+            message: "Security has accepted your alert. Starting live location sync."
+          });
+
+          // 3. Force student's socket connections into the alert room server-side
+          io.in(studentTokenRoom).socketsJoin(room);
+
+          console.log(`🛡️ SECURITY ACCEPTED → Notified student token room: ${studentTokenRoom} and joined ${room}`);
+        } else {
+          // Fallback to standard room broadcast if database row isn't found
+          io.to(room).emit("security_accepted", {
+            alertId,
+            securityId,
+            status: "accepted",
+            message: "Security has accepted your alert. Starting live location sync."
+          });
+          console.log(`⚠️ Alert ID ${alertId} not found in database, fell back to broadcasting to ${room}`);
+        }
+      } catch (err) {
+        console.error("❌ Error processing security_accepted database lookup:", err);
+        // Fallback emission
+        io.to(room).emit("security_accepted", {
+          alertId,
+          securityId,
+          status: "accepted",
+          message: "Security has accepted your alert. Starting live location sync."
+        });
+      }
     });
 
     // =========================
