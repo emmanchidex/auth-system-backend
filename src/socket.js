@@ -158,7 +158,7 @@ socket.on("join_token_room", (data) => {
       try {
         // 1. Look up the student_id linked to this alert in PostgreSQL
         const alertRecord = await pool.query(
-          "SELECT student_id FROM alerts WHERE id = $1",
+          "SELECT s.user_id AS student_id FROM alerts a JOIN students s ON a.student_id = s.id WHERE a.id = $1",
           [alertId]
         );
 
